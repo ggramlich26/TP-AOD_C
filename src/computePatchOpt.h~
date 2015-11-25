@@ -20,7 +20,8 @@ typedef struct node_s{
 	int getSubstCost(node *son, node *pere, char *iString, char *oString);
 	void printPatch();
 	int getPatchCost();
-	void *getInLine(int line);
-	void *getOutLine(int line);
+	char *getInLine(int line);
+	char *getOutLine(int line);
+	
 
 #endif
