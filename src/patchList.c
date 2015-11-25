@@ -1,4 +1,5 @@
 #include "patchList.h"
+#include "computePatchOpt.h"
 #include <stdio.h>
 #include <stdlib.h>
 
