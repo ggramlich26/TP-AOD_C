@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 node **state;
+
 int nInput;
 int nOutput;
 char *inFile;
