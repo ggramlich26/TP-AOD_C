@@ -12,7 +12,7 @@ typedef struct patchList_s{
 typedef patchListElement *patchList;
 
 void printPatchList(patchList l);
-pathList addHead(patchList l, operation op);
+patchList addHead(patchList l, operation op);
 void incRef(patchList l);
 void decRef(patchList l);
 

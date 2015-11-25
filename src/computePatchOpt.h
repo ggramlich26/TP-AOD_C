@@ -13,13 +13,15 @@ typedef struct node_s{
 } node;
 
 	void printHelp();
+	void init();
 	void computePatch();//computes the patch :o
-	int getAddCost(node *son node, *pere, char *iString, char *oString);
-	int getDelCost(node *son, node *pere, char *iString, char *oString);
+	int getAddCost(node *son, node *pere, char *oString);
+	int getDelCost(node *son, node *pere);
 	int getSubstCost(node *son, node *pere, char *iString, char *oString);
 	void printPatch();
 	int getPatchCost();
-	char *get
+	void *getInLine(int line);
+	void *getOutLine(int line);
 	
 
 #endif
