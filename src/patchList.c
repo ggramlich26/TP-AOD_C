@@ -5,7 +5,7 @@
 
 void printPatchList(patchList l) {
     l = inversion(l);
-    char string[512];
+    char string[1024];
     int iIn = 0, iOut = 0;
     
 //    “+ k\n” Ajout : la ligne suivante dans le patch est ajoutée sur le flot de sortie après la ligne k du flot d’entrée. Si k = 0, la ligne est insérée avant la première ligne (numérotée 1) du flot d’entrée.
@@ -22,7 +22,7 @@ void printPatchList(patchList l) {
                 iOut++;
                 
                 getOutLine(string, iOut);
-                printf("%s", string);
+                printf("%s\n", string);
                 break;
                 
             case DEL:
@@ -37,7 +37,7 @@ void printPatchList(patchList l) {
                 iIn++;
                 iOut++;
                 getOutLine(string, iOut);
-                printf("%s", string);
+                printf("%s\n", string);
                 break;
                 
             case COPY:
