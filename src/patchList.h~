@@ -11,8 +11,8 @@ typedef struct patchList_s{
 
 typedef patchListElement *patchList;
 
-void printPatch(patchList l);
-pathList addHead(patchList l, operation op);
+void printPatchList(patchList l);
+patchList addHead(patchList l, operation op);
 void incRef(patchList l);
 void decRef(patchList l);
 
