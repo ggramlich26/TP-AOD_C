@@ -1,7 +1,7 @@
 #ifndef __PATCHLIST_H_
 #define __PATCHLIST_H_
 
-typedef enum{ADD, SUBST, DEL} operation;
+typedef enum{ADD, SUBST, DEL, COPY} operation;
 
 typedef struct patchList_s{
 	operation op;
