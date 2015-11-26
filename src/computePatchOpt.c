@@ -5,8 +5,7 @@
 #include <stdlib.h>
 
 node **state;
-int *multDelCost;
-int *multDelLine;
+node **multDel;
 
 int nInput;
 int nOutput;
@@ -35,6 +34,7 @@ void printHelp(){
 }
 
 void init(){
+	//getting number of lines in input and output file
 	FILE *f = fopen(inFile, "rt");
 	if(f == NULL){
 		printf("Could not open File %s. Exiting\n", inFile);
@@ -69,6 +69,7 @@ void init(){
 	inFilep = fopen(inFile, "rt");
 	outFilep = fopen(outFile, "rt");
 
+	//init state array
 	state = calloc(nOutput + 1, sizeof(*state));
 	state[0] = calloc(1, sizeof(**state));
 	state[0]->cost = 0;
@@ -87,10 +88,10 @@ void init(){
 	}
 
 	//init multDel
-	multDelCost = calloc((nOutput+1), sizeof(*multDelCost));
-	multDelLine = calloc((nOutput+1), sizeof(*multDelLine));
+	multDel= calloc((nOutput+1), sizeof(*multDel));
 	for(int i = 0; i < nOutput+1; i++){
-		multDelCost[i] = MAXCOST;
+		multDel[i] = calloc(1, sizeof(**multDel));
+		multDel[i]->cost = MAXCOST;
 	}
 
 }
@@ -136,9 +137,17 @@ void cleanup(){
 	if(outFilep != NULL){
 		fclose(outFilep);
 	}
-	free(multDelLine);
-	free(multDelCost);
+	//cleanup multDel
+	for(int i = 0; i < nOutput + 1; i++){
+		if(multDel[i]->patch != NULL){
+			decRef(multDel[i]->patch);
+		}
+		free(multDel[i]);
+	}
+	free(multDel);
+	//free state
 	for(int i = 0; i < nOutput+1; i++){
+		decRef(state[i]->patch);
 		free(state[i]);
 	}
 	free(state);
@@ -157,18 +166,18 @@ patchList getAddPatch(node *son, node *pere, char *oString){
 }
 
 int getDelCost(node *son, node *pere){
-	if(pere->cost + 10 < multDelCost[son->outLine] + 15)
+	if(pere->cost + 10 < multDel[son->outLine]->cost + 15)
 		return pere->cost + 10;
 	else
-		return multDelCost[son->outLine] + 15;
+		return multDel[son->outLine]->cost + 15;
 }
 
 patchList getDelPatch(node *son, node *pere){
-	if(pere->cost + 10 < multDelCost[son->outLine] + 15)
+	if(pere->cost + 10 < multDel[son->outLine]->cost + 15)
 		return addHead(pere->patch, DEL);
 	else{
-		patchList l = pere->patch;
-		for(int i = 0; i < son->inLine - multDelLine[son->outLine]; i++){
+		patchList l = multDel[son->outLine]->patch;
+		for(int i = 0; i < son->inLine - multDel[son->outLine]->inLine; i++){
 			l = addHead(l, DEL);
 		}
 		return l;
@@ -197,9 +206,13 @@ patchList getSubstPatch(node *son, node *pere, char *iString, char *oString){
 }
 
 void updateDel(node *n){
-	if(n->cost < multDelCost[n->outLine]){
-		multDelCost[n->outLine] = n->cost;
-		multDelLine[n->outLine] = n->inLine;
+	if(n->cost < multDel[n->outLine]->cost){
+		decRef(multDel[n->outLine]->patch);
+		incRef(n->patch);
+		multDel[n->outLine]->cost = n->cost;
+		multDel[n->outLine]->inLine = n->inLine;
+		multDel[n->outLine]->patch = n->patch;
+		multDel[n->outLine]->outLine = n->outLine;
 	}
 }
 
@@ -212,9 +225,12 @@ void computePatch(){
 			treatNode(j, new, old);
 			if(j == nOutput){
 				node *tmp = state[j];
+				node *tmp2 = state[j-1];
 				decRef(tmp->patch);
 				state[j] = new;
+				state[j-1] = old;
 				new = tmp;
+				old = tmp2;
 			}
 			else if(j != 0){
 				node *tmp = state[j-1];
@@ -229,7 +245,7 @@ void computePatch(){
 				old = tmp;
 			}
 		}
-		printStateCost();
+		//printStateCost();
 	}
 }
 
@@ -252,19 +268,22 @@ void treatNode(int index, node *me, node *addNode){
 		return;
 	}
 	getInLine(iString, me->inLine);
+	if(index == nOutput-1){
+		;
+	}
 
 	int addCost = getAddCost(me, addNode, oString);
 	int delCost = getDelCost(me, state[index]);
 	int substCost = getSubstCost(me, state[index-1], iString, oString);
 	//printf("%d %d %d\n", addCost, delCost, substCost);
-	if(addCost < delCost && addCost < substCost){
-		me->cost = addCost;
-		me->patch = getAddPatch(me, addNode, oString);
-		updateDel(me);
-	}
-	else if(substCost < delCost){
+	if(substCost <= delCost && substCost <= addCost){
 		me->cost = substCost;
 		me->patch = getSubstPatch(me, state[index-1], iString, oString);
+		updateDel(me);
+	}
+	else if(addCost < delCost){
+		me->cost = addCost;
+		me->patch = getAddPatch(me, addNode, oString);
 		updateDel(me);
 	}
 	else{
@@ -275,7 +294,7 @@ void treatNode(int index, node *me, node *addNode){
 }
 
 void printPatch(){
-	printPatchListBackward(state[nOutput]->patch);
+	//printPatchListBackward(state[nOutput]->patch);
 	printPatchList(state[nOutput]->patch);
 }
 
@@ -286,7 +305,7 @@ void printStateCost(){
 	}
 	printf("   d: ");
 	for(int i = 0; i < nOutput+1; i++){
-		printf("%2d ", multDelCost[i]);
+		printf("%2d ", multDel[i]->cost);
 	}
 	printf("\n");
 }
