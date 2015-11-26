@@ -221,6 +221,7 @@ void computePatch(){
 	node *old = calloc(1, sizeof(*old));
 	node *new = calloc(1, sizeof(*new));
 	for(int i = 1; i <= nInput; i++){
+		printf("%d\n", (int)(i*100.0 / nInput));
 		for(int j = 0; j < nOutput+1; j++){
 			treatNode(j, new, old);
 			if(j == nOutput){
@@ -294,7 +295,7 @@ void treatNode(int index, node *me, node *addNode){
 }
 
 void printPatch(){
-	printPatchListBackward(state[nOutput]->patch);
+	//printPatchListBackward(state[nOutput]->patch);
 	printPatchList(state[nOutput]->patch);
 }
 

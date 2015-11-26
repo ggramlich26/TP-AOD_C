@@ -176,9 +176,16 @@ void decRef(patchList l) {
 
     l->nRef--;
     
-    if (l->nRef == 0) {
-        delHead(l);
-    }
+   // if (l->nRef == 0) {
+   //     delHead(l);
+   // }
+	while(0 == l->nRef){
+		patchList tmp = l->next;
+		free(l);
+		(tmp->nRef)--;
+		l = tmp;
+	}
+
 }
 
 patchList inversion(patchList l) {
