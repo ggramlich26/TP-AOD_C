@@ -140,6 +140,7 @@ void printPatchListWithLineNumbers(patchList l) {
 }
 
 patchList addHead(patchList l, operation op) {
+	return NULL;
     // creation
     patchListElement* new = malloc(sizeof(patchListElement));
     new->op = op;
@@ -166,6 +167,7 @@ patchList delHead(patchList l) {
 }
 
 void incRef(patchList l) {
+	return;
     l->nRef++;
 }
 
@@ -182,6 +184,9 @@ void decRef(patchList l) {
 	while(0 == l->nRef){
 		patchList tmp = l->next;
 		free(l);
+		if(NULL == tmp){
+			break;
+		}
 		(tmp->nRef)--;
 		l = tmp;
 	}
