@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 
 node **state;
 node **multDel;
@@ -22,9 +23,15 @@ int main(int argc, char** argv){
 	}
 	inFile = argv[1];
 	outFile = argv[2];
-	printf("%s   %s\n", inFile, outFile);
+	//printf("%s   %s\n", inFile, outFile);
+	clock_t t1 = clock();
+
 	init();
 	computePatch();
+
+	clock_t t2 = clock();
+	printf("Calculating took: %fms\n", (((float)t2 - (float)t1) / 1000000.0F ) * 1000);
+
 	printPatch();
 	cleanup();
 }
@@ -220,10 +227,16 @@ void computePatch(){
 	//printStateCost();
 	node *old = calloc(1, sizeof(*old));
 	node *new = calloc(1, sizeof(*new));
+	char iString[MAXSTRINGSIZE];
 	for(int i = 1; i <= nInput; i++){
 		printf("%d\n", (int)(i*100.0 / nInput));
+		getInLine(iString, i);
+		float patchprocessingTime = 0;
 		for(int j = 0; j < nOutput+1; j++){
-			treatNode(j, new, old);
+			clock_t t1 = clock();
+			treatNode(j, new, old, iString);
+			clock_t t2 = clock();
+			patchprocessingTime += (((float)t2 - (float)t1) / 1000000.0F ) * 1000;
 			if(j == nOutput){
 				node *tmp = state[j];
 				node *tmp2 = state[j-1];
@@ -246,14 +259,15 @@ void computePatch(){
 				old = tmp;
 			}
 		}
+		//printf("patchProcessingTime: %f\n", patchprocessingTime/nInput);
 		//printStateCost();
 	}
 }
 
-void treatNode(int index, node *me, node *addNode){
+void treatNode(int index, node *me, node *addNode, char *iString){
 	me->inLine = state[index]->inLine + 1;
 	me->outLine = state[index]->outLine;
-	char iString[MAXSTRINGSIZE];
+	//char iString[MAXSTRINGSIZE];
 	char oString[MAXSTRINGSIZE];
 	if(me->outLine == 0){
 		me->cost = getDelCost(me, state[index]);
@@ -268,7 +282,7 @@ void treatNode(int index, node *me, node *addNode){
 		updateDel(me);
 		return;
 	}
-	getInLine(iString, me->inLine);
+	//getInLine(iString, me->inLine);
 	if(index == nOutput-1){
 		;
 	}
