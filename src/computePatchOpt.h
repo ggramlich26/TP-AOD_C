@@ -4,6 +4,7 @@
 #include "patchList.h"
 
 #define MAXCOST 0x00FFFFFF
+#define MAXSTRINGSIZE 512
 
 typedef struct node_s{
 	int cost;

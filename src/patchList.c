@@ -28,6 +28,8 @@ void printPatchList(patchList l) {
     l = inversion(l);
     char string[512];
     int iIn = 0, iOut = 0;
+	int nDel = 0;
+	int delLine = 0;
     
 //    “+ k\n” Ajout : la ligne suivante dans le patch est ajoutée sur le flot de sortie après la ligne k du flot d’entrée. Si k = 0, la ligne est insérée avant la première ligne (numérotée 1) du flot d’entrée.
 //    “= k\n” Substitution : la ligne k du flot d’entrée est remplacée sur le flot de sortie par la ligne suivante dans le patch.
@@ -35,6 +37,15 @@ void printPatchList(patchList l) {
     
     while (l != NULL) {
 		//printf("iIn: %d, iOut: %d\n", iIn, iOut);
+		if(nDel > 0 && l->op != DEL){
+			if(nDel == 1){
+				printf("- %d\n", delLine);
+			}
+			else{
+				printf("D %d %d\n", delLine, nDel);
+			}
+			nDel = 0;
+		}
         
         switch (l->op) {
             case ADD:
@@ -47,7 +58,14 @@ void printPatchList(patchList l) {
                 break;
                 
             case DEL:
-                printf("- %d\n", iIn+1);
+                //printf("- %d\n", iIn+1);
+				if(nDel == 0){
+					nDel = 1;
+					delLine = iIn+1;
+				}
+				else{
+					nDel++;
+				}
                 
                 iIn++;
                 break;

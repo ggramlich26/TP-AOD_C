@@ -77,7 +77,7 @@ void init(){
 	state[0]->outLine = 0;
 	state[0]->patch = NULL;
 	for(int i = 1; i < nOutput + 1; i++){
-		char str[512];
+		char str[MAXSTRINGSIZE];
 		getOutLine(str, i);
 		node *n = calloc(1, sizeof(*n));
 		n->cost = getAddCost(state[i], state[i-1], str);
@@ -107,7 +107,7 @@ void getInLine(char *str, int line){
 	}
 	while(myLine <= line){
 		myLine++;
-		fgets(str, sizeof(str), inFilep);
+		fgets(str, MAXSTRINGSIZE, inFilep);
 	}
 }
 
@@ -126,7 +126,7 @@ void getOutLine(char *str, int line){
 	}
 	while(myLine <= line){
 		myLine++;
-		fgets(str, sizeof(str), outFilep);
+		fgets(str, MAXSTRINGSIZE, outFilep);
 	}
 }
 
@@ -217,7 +217,7 @@ void updateDel(node *n){
 }
 
 void computePatch(){
-	printStateCost();
+	//printStateCost();
 	node *old = calloc(1, sizeof(*old));
 	node *new = calloc(1, sizeof(*new));
 	for(int i = 1; i <= nInput; i++){
@@ -252,8 +252,8 @@ void computePatch(){
 void treatNode(int index, node *me, node *addNode){
 	me->inLine = state[index]->inLine + 1;
 	me->outLine = state[index]->outLine;
-	char iString[512];
-	char oString[512];
+	char iString[MAXSTRINGSIZE];
+	char oString[MAXSTRINGSIZE];
 	if(me->outLine == 0){
 		me->cost = getDelCost(me, state[index]);
 		me->patch = getDelPatch(me, state[index]);
@@ -294,7 +294,7 @@ void treatNode(int index, node *me, node *addNode){
 }
 
 void printPatch(){
-	//printPatchListBackward(state[nOutput]->patch);
+	printPatchListBackward(state[nOutput]->patch);
 	printPatchList(state[nOutput]->patch);
 }
 
