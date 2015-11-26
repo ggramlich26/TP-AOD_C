@@ -228,8 +228,16 @@ void computePatch(){
 	node *old = calloc(1, sizeof(*old));
 	node *new = calloc(1, sizeof(*new));
 	char iString[MAXSTRINGSIZE];
+    
+    int pourcentage_a, pourcentage_b;
+    
 	for(int i = 1; i <= nInput; i++){
-		printf("%d\n", (int)(i*100.0 / nInput));
+        pourcentage_a = i*100.0 / nInput;
+        if (pourcentage_a > pourcentage_b) {
+            pourcentage_b = pourcentage_a;
+            printf("%d\n", pourcentage_b);
+        }
+        
 		getInLine(iString, i);
 		float patchprocessingTime = 0;
 		for(int j = 0; j < nOutput+1; j++){
@@ -259,8 +267,8 @@ void computePatch(){
 				old = tmp;
 			}
 		}
-		//printf("patchProcessingTime: %f\n", patchprocessingTime/nInput);
-		//printStateCost();
+		printf("patchProcessingTime: %f\n", patchprocessingTime/nInput);
+        //printStateCost();
 	}
 }
 
