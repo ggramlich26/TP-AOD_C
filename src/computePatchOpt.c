@@ -35,11 +35,13 @@ void printHelp(){
 }
 
 void init(){
+    // ouverture du fichier source
 	FILE *f = fopen(inFile, "rt");
 	if(f == NULL){
 		printf("Could not open File %s. Exiting\n", inFile);
 		exit(0);
 	}
+    //comptage du nombre de lignes
 	int lines = 0;
 	char ch;
 	while(!feof(f)){
@@ -50,11 +52,14 @@ void init(){
 	}
 	fclose(f);
 	nInput = lines;
+
+    // ouverture du fichier target
 	f = fopen(outFile, "rt");
 	if(f == NULL){
 		printf("Could not open File %s. Exiting\n", outFile);
 		exit(0);
 	}
+    // comptage du nombre de lignes
 	lines = 0;
 	while(!feof(f)){
 		ch = fgetc(f);

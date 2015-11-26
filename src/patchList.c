@@ -70,7 +70,7 @@ void printPatchListWithLineNumbers(patchList l) {
                 i++;
                 
                 getOutLine(string, iOut);
-                printf("%d %s", i, string);
+                printf("%d %s\n", i, string);
                 break;
                 
             case DEL:
@@ -88,7 +88,7 @@ void printPatchListWithLineNumbers(patchList l) {
                 iOut++;
                 i++;
                 getOutLine(string, iOut);
-                printf("%d %s", i, string);
+                printf("%d %s\n", i, string);
                 break;
                 
             case COPY:
