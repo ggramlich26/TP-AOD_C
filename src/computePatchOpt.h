@@ -17,7 +17,7 @@ typedef struct node_s{
 	void init();
 	void cleanup();
 	void computePatch();//computes the patch :o
-	void treatNode(int index, node *me, node *addNode);
+	void treatNode(int index, node *me, node *addNode, char *iString);
 	int getAddCost(node *son, node *pere, char *oString);
 	int getDelCost(node *son, node *pere);
 	int getSubstCost(node *son, node *pere, char *iString, char *oString);
