@@ -1,7 +1,6 @@
 #ifndef __COMPUTEPATCHOPT_H_
 #define __COMPUTEPATCHOPT_H_
 
-#include "patchList.h"
 
 #define MAXCOST 0x00FFFFFF
 #define MAXSTRINGSIZE 512
@@ -10,7 +9,6 @@ typedef struct node_s{
 	int cost;
 	int inLine;
 	int outLine;
-	patchList patch;
 } node;
 
 	void printHelp();

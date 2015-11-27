@@ -1,3 +1,10 @@
+/*! \file stringList.c
+ *  \brief	   This is a simple implementation of the basic functions for a list containing C-Strings.
+ *  \author    Georg Gramlich
+ *  \version   1.0
+ *  \date      2015
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

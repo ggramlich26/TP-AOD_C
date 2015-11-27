@@ -1,8 +1,10 @@
 #ifndef __PATCHTABLE_H_
 #define __PATCHTABLE_H_
 
-#include "patchList.h"
-//typedef enum{ADD, SUBST, DEL, COPY} operation;
+/**
+* This enum defines the possible operations in a patch
+*/
+typedef enum{ADD, SUBST, DEL, COPY} operation;
 
 #define ADDOP 0xF0000000
 #define SUBSTOP 0xE0000000
