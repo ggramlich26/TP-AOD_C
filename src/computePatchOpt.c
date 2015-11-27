@@ -1,17 +1,24 @@
-#include "patchList.h"
+#include "patchTable.h"
 #include "computePatchOpt.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
+#include <stdint.h>
 
 node **state;
-int *multDelCost;
-int *multDelLine;
+node **multDel;
+
+uint8_t printEnabled = 1;
+
+float avgTime;
+int nExec;
 
 int nInput;
 int nOutput;
 char *inFile;
 char *outFile;
+char **outFileBuffer;
 FILE *inFilep;
 FILE *outFilep;
 
@@ -23,10 +30,19 @@ int main(int argc, char** argv){
 	}
 	inFile = argv[1];
 	outFile = argv[2];
-	printf("%s   %s\n", inFile, outFile);
+	//printf("%s   %s\n", inFile, outFile);
+	clock_t t1 = clock();
+
 	init();
 	computePatch();
-	printPatch();
+
+
+	if(printEnabled)
+		printPatch();
+	clock_t t2 = clock();
+
+	//printf("Calculating took: %fms\n", (((float)t2 - (float)t1) / 1000000.0F ) * 1000);
+
 	cleanup();
 }
 
@@ -35,6 +51,7 @@ void printHelp(){
 }
 
 void init(){
+	//getting number of lines in input and output file
 	FILE *f = fopen(inFile, "rt");
 	if(f == NULL){
 		printf("Could not open File %s. Exiting\n", inFile);
@@ -62,35 +79,48 @@ void init(){
 			lines++;
 		}
 	}
-	fclose(f);
 	nOutput = lines;
+	rewind(f);
+	outFileBuffer = malloc(sizeof(*outFileBuffer) * nOutput);
+	char str[MAXSTRINGSIZE];
+	for(int i = 0; i < nOutput; i++){
+		fgets(str, MAXSTRINGSIZE, f);
+		outFileBuffer[i] = malloc((strlen(str)+1)*sizeof(*str));
+		strcpy(outFileBuffer[i], str);
+	}
+	fclose(f);
+	
+	//init patchTable
+	if(printEnabled)
+		initPatchTable();
 
 	//init Filepointers
 	inFilep = fopen(inFile, "rt");
 	outFilep = fopen(outFile, "rt");
 
+	//init state array
 	state = calloc(nOutput + 1, sizeof(*state));
 	state[0] = calloc(1, sizeof(**state));
 	state[0]->cost = 0;
 	state[0]->inLine = 0;
 	state[0]->outLine = 0;
-	state[0]->patch = NULL;
+	//state[0]->patch = NULL;
 	for(int i = 1; i < nOutput + 1; i++){
-		char str[512];
-		getOutLine(str, i);
+		char *str = getOutLine(i);
 		node *n = calloc(1, sizeof(*n));
 		n->cost = getAddCost(state[i], state[i-1], str);
-		n->patch = addHead(state[i-1]->patch, ADD);
+		//n->patch = addHead(state[i-1]->patch, ADD);
+		setOp(0, i, ADD);
 		n->inLine = 0;
 		n->outLine = i;
 		state[i] = n;
 	}
 
 	//init multDel
-	multDelCost = calloc((nOutput+1), sizeof(*multDelCost));
-	multDelLine = calloc((nOutput+1), sizeof(*multDelLine));
+	multDel= calloc((nOutput+1), sizeof(*multDel));
 	for(int i = 0; i < nOutput+1; i++){
-		multDelCost[i] = MAXCOST;
+		multDel[i] = calloc(1, sizeof(**multDel));
+		multDel[i]->cost = MAXCOST;
 	}
 
 }
@@ -98,35 +128,26 @@ void init(){
 void getInLine(char *str, int line){
 	static int myLine = 1;
 	if(line < myLine){
-		if(inFilep != NULL){
-			fclose(inFilep);
-		}
-		inFilep = fopen(inFile, "r");
+		rewind(inFilep);
 		myLine = 1;
 	}
 	while(myLine <= line){
 		myLine++;
-		fgets(str, sizeof(str), inFilep);
+		fgets(str, MAXSTRINGSIZE, inFilep);
 	}
 }
 
-void getOutLine(char *str, int line){
-	static int myLine = 1;
-	if(line < myLine){
-		if(outFilep != NULL){
-			fclose(outFilep);
-		}
-		outFilep = fopen(outFile, "rt");
-		if(NULL == outFilep){
-			printf("Could not open file %s\n", outFile);
-			exit(0);
-		}
-		myLine = 1;
-	}
-	while(myLine <= line){
-		myLine++;
-		fgets(str, sizeof(str), outFilep);
-	}
+char* getOutLine(int line){
+	return outFileBuffer[line-1];
+//	static int myLine = 1;
+//	if(line < myLine){
+//		rewind(outFilep);
+//		myLine = 1;
+//	}
+//	while(myLine <= line){
+//		myLine++;
+//		fgets(str, MAXSTRINGSIZE, outFilep);
+//	}
 }
 
 void cleanup(){
@@ -136,9 +157,17 @@ void cleanup(){
 	if(outFilep != NULL){
 		fclose(outFilep);
 	}
-	free(multDelLine);
-	free(multDelCost);
+	//cleanup multDel
+	for(int i = 0; i < nOutput + 1; i++){
+//		if(multDel[i]->patch != NULL){
+//			decRef(multDel[i]->patch);
+//		}
+		free(multDel[i]);
+	}
+	free(multDel);
+	//free state
 	for(int i = 0; i < nOutput+1; i++){
+		//decRef(state[i]->patch);
 		free(state[i]);
 	}
 	free(state);
@@ -157,22 +186,27 @@ patchList getAddPatch(node *son, node *pere, char *oString){
 }
 
 int getDelCost(node *son, node *pere){
-	if(pere->cost + 10 < multDelCost[son->outLine] + 15)
-		return pere->cost + 10;
-	else
-		return multDelCost[son->outLine] + 15;
+	return pere->cost + 10;
+}
+
+int getMultDelCost(node *son){
+	return multDel[son->outLine]->cost + 15;
 }
 
 patchList getDelPatch(node *son, node *pere){
-	if(pere->cost + 10 < multDelCost[son->outLine] + 15)
+	if(pere->cost + 10 < multDel[son->outLine]->cost + 15)
 		return addHead(pere->patch, DEL);
 	else{
-		patchList l = pere->patch;
-		for(int i = 0; i < son->inLine - multDelLine[son->outLine]; i++){
+		patchList l = multDel[son->outLine]->patch;
+		for(int i = 0; i < son->inLine - multDel[son->outLine]->inLine; i++){
 			l = addHead(l, DEL);
 		}
 		return l;
 	}
+}
+
+int getMultDelLines(node *son){
+	return son->inLine - multDel[son->outLine]->inLine;
 }
 
 int getSubstCost(node *son, node *pere, char *iString, char *oString){
@@ -197,28 +231,49 @@ patchList getSubstPatch(node *son, node *pere, char *iString, char *oString){
 }
 
 void updateDel(node *n){
-	if(n->cost < multDelCost[n->outLine]){
-		multDelCost[n->outLine] = n->cost;
-		multDelLine[n->outLine] = n->inLine;
+	if(n->cost < multDel[n->outLine]->cost){
+		//decRef(multDel[n->outLine]->patch);
+		//incRef(n->patch);
+		multDel[n->outLine]->cost = n->cost;
+		multDel[n->outLine]->inLine = n->inLine;
+		//multDel[n->outLine]->patch = n->patch;
+		multDel[n->outLine]->outLine = n->outLine;
 	}
 }
 
 void computePatch(){
-	printStateCost();
+	//printStateCost();
 	node *old = calloc(1, sizeof(*old));
 	node *new = calloc(1, sizeof(*new));
+	char iString[MAXSTRINGSIZE];
+	//int percentage = -1;
 	for(int i = 1; i <= nInput; i++){
+	//	if((int)(i*100.0 / nInput)>percentage){
+	//		percentage++;
+	//		printf("%d%%\n", percentage);
+	//	}
+		//printf("%d\n", (int)(i*100.0 / nInput));
+//		avgTime = 0;
+//		nExec = 0;
+		getInLine(iString, i);
+		//float patchprocessingTime = 0;
 		for(int j = 0; j < nOutput+1; j++){
-			treatNode(j, new, old);
+			//clock_t t1 = clock();
+			treatNode(j, new, old, iString);
+			//clock_t t2 = clock();
+			//patchprocessingTime += (((float)t2 - (float)t1) / 1000000.0F ) * 1000;
 			if(j == nOutput){
 				node *tmp = state[j];
-				decRef(tmp->patch);
+				node *tmp2 = state[j-1];
+				//decRef(tmp->patch);
 				state[j] = new;
+				state[j-1] = old;
 				new = tmp;
+				old = tmp2;
 			}
 			else if(j != 0){
 				node *tmp = state[j-1];
-				decRef(tmp->patch);
+				//decRef(tmp->patch);
 				state[j-1] = old;
 				old = new;
 				new = tmp;
@@ -229,54 +284,79 @@ void computePatch(){
 				old = tmp;
 			}
 		}
-		printStateCost();
+		//printf("avgTime: %fms\n", avgTime / nExec);
+		//printStateCost();
 	}
 }
 
-void treatNode(int index, node *me, node *addNode){
+void treatNode(int index, node *me, node *addNode, char *iString){
 	me->inLine = state[index]->inLine + 1;
 	me->outLine = state[index]->outLine;
-	char iString[512];
-	char oString[512];
+	//char iString[MAXSTRINGSIZE];
 	if(me->outLine == 0){
 		me->cost = getDelCost(me, state[index]);
-		me->patch = getDelPatch(me, state[index]);
+		//me->patch = getDelPatch(me, state[index]);
 		updateDel(me);
 		return;
 	}
-	getOutLine(oString, me->outLine);
+	char *oString = getOutLine(me->outLine);
 	if(me->inLine == 0){
 		me->cost = getAddCost(me, addNode, oString);
-		me->patch = getAddPatch(me, addNode, oString);
+		//me->patch = getAddPatch(me, addNode, oString);
 		updateDel(me);
 		return;
 	}
-	getInLine(iString, me->inLine);
+	//getInLine(iString, me->inLine);
 
 	int addCost = getAddCost(me, addNode, oString);
 	int delCost = getDelCost(me, state[index]);
+	int multDelCost = getMultDelCost(me);
 	int substCost = getSubstCost(me, state[index-1], iString, oString);
+	//clock_t t1 = clock();
 	//printf("%d %d %d\n", addCost, delCost, substCost);
-	if(addCost < delCost && addCost < substCost){
-		me->cost = addCost;
-		me->patch = getAddPatch(me, addNode, oString);
+	if(substCost <= multDelCost && substCost < delCost && substCost <= addCost){
+		me->cost = substCost;
+		//me->patch = getSubstPatch(me, state[index-1], iString, oString);
+		if(substCost == state[index-1]->cost){
+			if(printEnabled)
+				setOp(me->inLine, me->outLine, COPY);
+		}
+		else{
+			if(printEnabled)
+				setOp(me->inLine, me->outLine, SUBST);
+		}
 		updateDel(me);
 	}
-	else if(substCost < delCost){
-		me->cost = substCost;
-		me->patch = getSubstPatch(me, state[index-1], iString, oString);
+	else if(multDelCost < delCost && multDelCost < addCost){
+		me->cost = multDelCost;
+		//me->patch = getSubstPatch(me, state[index-1], iString, oString);
+		if(printEnabled)
+			setMultDelOp(me->inLine, me->outLine, getMultDelLines(me));
+		updateDel(me);
+	}
+	else if(addCost < delCost){
+		me->cost = addCost;
+		//me->patch = getAddPatch(me, addNode, oString);
+		if(printEnabled)
+			setOp(me->inLine, me->outLine, ADD);
 		updateDel(me);
 	}
 	else{
 		me->cost = delCost;
-		me->patch = getDelPatch(me, state[index]);
+		//me->patch = getDelPatch(me, state[index]);
+		if(printEnabled)
+			setOp(me->inLine, me->outLine, DEL);
 		updateDel(me);
+	//	clock_t t2 = clock();
+	//	avgTime += (((float)t2 - (float)t1) / 1000000.0F ) * 1000;
+	//	nExec++;
 	}
 }
 
 void printPatch(){
-	printPatchListBackward(state[nOutput]->patch);
-	printPatchList(state[nOutput]->patch);
+	//printPatchListBackward(state[nOutput]->patch);
+	//printPatchList(state[nOutput]->patch);
+	printPatchTable(nInput, nOutput);
 }
 
 void printStateCost(){
@@ -286,7 +366,7 @@ void printStateCost(){
 	}
 	printf("   d: ");
 	for(int i = 0; i < nOutput+1; i++){
-		printf("%2d ", multDelCost[i]);
+		printf("%2d ", multDel[i]->cost);
 	}
 	printf("\n");
 }

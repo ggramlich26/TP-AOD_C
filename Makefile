@@ -12,7 +12,7 @@ LIBDIR=$(REFDIR)/lib
 
 LATEXSOURCE=$(wildcard $(REPORTDIR)/*.tex)
 CSOURCEAPPLY=$(wildcard $(SRCDIR)/applyPatch.c);
-CSOURCECOMPUTE=$(wildcard $(SRCDIR)/computePatchOpt.c $(SRCDIR)/patchList.c);
+CSOURCECOMPUTE=$(wildcard $(SRCDIR)/computePatchOpt.c $(SRCDIR)/patchList.c $(SRCDIR)/patchTable.c $(SRCDIR)/stringList.c);
 PDF=$(LATEXSOURCE:.tex=.pdf)
 
 JLIBS=$(LIBDIR)/commons-io-2.4/commons-io-2.4.jar
@@ -20,7 +20,7 @@ JLIBS=$(LIBDIR)/commons-io-2.4/commons-io-2.4.jar
 
 all: binary report doc 
 
-binary: computePatchOpt
+binary: computePatchOpt bin
 
 
 $(BINDIR)/applyPatch: $(CSOURCEAPPLY)
